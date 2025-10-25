@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: mcp-agent
+
+resources:
+  - namespace.yaml
+  - deployment.yaml
+  - service.yaml
+  - configmap.yaml
+
+configMapGenerator:
+  - name: mcp-agent-config
+    literals:
+      - MCP_URL=http://localhost:3000/mcp
+      - MODEL=gpt-4o
+      - MAX_STEPS=10
+
+secretGenerator:
+  - name: mcp-agent-secrets
+    literals:
+      - OPENAI_API_KEY=YOUR_API_KEY_HERE
+
+commonLabels:
+  app: mcp-agent
+  managed-by: flux
+
+images:
+  - name: wholelottahoopla/rarb
+    newTag: latest
