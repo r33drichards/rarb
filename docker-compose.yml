@@ -3,7 +3,7 @@ version: '3.8'
 services:
   mcp-agent:
     build: .
-    image: r33drichards/rarb:latest
+    image: wholelottahoopla/rarb:latest
     container_name: mcp-agent
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}

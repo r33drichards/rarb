@@ -1,5 +1,8 @@
 # MCP Agent CLI
 
+[![Docker Image](https://img.shields.io/badge/docker-wholelottahoopla%2Frarb-blue?logo=docker)](https://hub.docker.com/r/wholelottahoopla/rarb)
+[![Build Status](https://github.com/r33drichards/rarb/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/r33drichards/rarb/actions/workflows/docker-publish.yml)
+
 A command-line tool that connects to an MCP (Model Context Protocol) server and executes prompts using AI models via OpenAI's API. Available in both Node.js and Deno versions.
 
 ## Features
@@ -9,7 +12,8 @@ A command-line tool that connects to an MCP (Model Context Protocol) server and 
 - **Multiple Modes**: Headless, single-prompt, and interactive modes
 - **Step-by-Step Logging**: Detailed output of tool calls and results
 - **Graceful Shutdown**: Handles SIGINT and SIGTERM signals properly
-- **Docker Support**: Run in a containerized environment
+- **Docker Support**: Pre-built multi-arch images available on Docker Hub
+- **CI/CD**: Automated builds on every commit with GitHub Actions
 
 ## Prerequisites
 
@@ -42,16 +46,21 @@ cd rarb
 
 ### Option 3: Docker
 
+**Pull from Docker Hub (recommended):**
+```bash
+docker pull wholelottahoopla/rarb:latest
+```
+
+**Or build locally:**
 ```bash
 git clone https://github.com/r33drichards/rarb.git
 cd rarb
-docker build -t r33drichards/rarb:latest .
+docker build -t wholelottahoopla/rarb:latest .
 ```
 
-Or pull from Docker Hub (once published):
-```bash
-docker pull r33drichards/rarb:latest
-```
+**Available tags:**
+- `latest` - Latest build from main branch
+- `<commit-sha>` - Specific commit version (e.g., `abc123def456...`)
 
 ## Configuration
 
@@ -84,7 +93,7 @@ deno run --allow-net --allow-read --allow-write --allow-env main.ts
 docker run --rm \
   -e OPENAI_API_KEY="your-key" \
   --network host \
-  r33drichards/rarb:latest
+  wholelottahoopla/rarb:latest
 ```
 
 ### Command-Line Options
@@ -110,7 +119,7 @@ node index.js
 docker run -it --rm \
   -e OPENAI_API_KEY="your-key" \
   --network host \
-  r33drichards/rarb:latest \
+  wholelottahoopla/rarb:latest \
   --url "http://localhost:8080/mcp"
 ```
 
@@ -127,7 +136,7 @@ node index.js \
 docker run --rm \
   -e OPENAI_API_KEY="your-key" \
   --network host \
-  r33drichards/rarb:latest \
+  wholelottahoopla/rarb:latest \
   --prompt "go to craigslist and find free things in sf posted today"
 ```
 
@@ -146,7 +155,7 @@ docker run --rm \
   -e OPENAI_API_KEY="your-key" \
   --network host \
   -v $(pwd)/output:/output \
-  r33drichards/rarb:latest \
+  wholelottahoopla/rarb:latest \
   --headless \
   --url "http://localhost:8080/mcp" \
   --prompt "go to craigslist and find free things in sf posted today and write to /output/items.csv"
@@ -216,7 +225,7 @@ docker run --rm \
   -e OPENAI_API_KEY="your-key" \
   --network host \
   -v $(pwd)/output:/output \
-  r33drichards/rarb:latest \
+  wholelottahoopla/rarb:latest \
   --url "http://localhost:8080/mcp" \
   --headless \
   --prompt "go to craigslist and find free things in sf posted today and write to /output/items.csv only include interesting things, include the urls"
@@ -253,25 +262,25 @@ deno task dev
 
 **Docker development:**
 ```bash
-docker build -t r33drichards/rarb:dev .
+docker build -t wholelottahoopla/rarb:dev .
 docker run --rm -it \
   -e OPENAI_API_KEY="your-key" \
   --network host \
-  r33drichards/rarb:dev
+  wholelottahoopla/rarb:dev
 ```
 
 ## Docker Details
 
 ### Building the Image
 ```bash
-docker build -t r33drichards/rarb:latest .
+docker build -t wholelottahoopla/rarb:latest .
 ```
 
 ### Running with Environment Variables
 ```bash
 docker run --rm \
   -e OPENAI_API_KEY="your-key" \
-  r33drichards/rarb:latest --help
+  wholelottahoopla/rarb:latest --help
 ```
 
 ### Volume Mounts for Output Files
@@ -284,7 +293,7 @@ docker run --rm \
   -e OPENAI_API_KEY="your-key" \
   -v $(pwd)/output:/output \
   --network host \
-  r33drichards/rarb:latest \
+  wholelottahoopla/rarb:latest \
   --url "http://localhost:8080/mcp" \
   --prompt "your prompt that writes to /output/file.csv"
 ```
