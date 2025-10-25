@@ -1,0 +1,27 @@
+{
+  "name": "mcp-agent",
+  "version": "1.0.0",
+  "description": "CLI agent for MCP tools with HTTP transport",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "mcp-agent": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "test": "node index.js --help"
+  },
+  "keywords": [
+    "mcp",
+    "ai",
+    "cli"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ai": "^3.4.33",
+    "@ai-sdk/openai": "^1.0.12",
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "commander": "^12.1.0"
+  }
+}

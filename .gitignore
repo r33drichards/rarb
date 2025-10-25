@@ -1,0 +1,26 @@
+# Deno
+.deno/
+deno.lock
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Environment variables
+.env
+.env.local
+
+# Output files
+*.csv
+items.csv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
