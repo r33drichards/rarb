@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  mcp-agent:
+    build: .
+    image: r33drichards/rarb:latest
+    container_name: mcp-agent
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      # Mount output directory for CSV files
+      - ./output:/output
+    # Override the default command with your desired arguments
+    command: >
+      --url "http://host.docker.internal:8080/mcp"
+      --prompt "go to craigslist and find free things in sf posted today and write to /output/items.csv"
+      --headless
+    # Add network mode to access host services
+    network_mode: host
+    # Restart policy
+    restart: "no"

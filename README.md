@@ -1,6 +1,6 @@
-# MCP Agent CLI (Deno)
+# MCP Agent CLI
 
-A Deno-based command-line tool that connects to an MCP (Model Context Protocol) server and executes prompts using AI models via OpenAI's API.
+A command-line tool that connects to an MCP (Model Context Protocol) server and executes prompts using AI models via OpenAI's API. Available in both Node.js and Deno versions.
 
 ## Features
 
@@ -9,19 +9,48 @@ A Deno-based command-line tool that connects to an MCP (Model Context Protocol) 
 - **Multiple Modes**: Headless, single-prompt, and interactive modes
 - **Step-by-Step Logging**: Detailed output of tool calls and results
 - **Graceful Shutdown**: Handles SIGINT and SIGTERM signals properly
+- **Docker Support**: Run in a containerized environment
 
 ## Prerequisites
 
-- [Deno](https://deno.land/) installed (v1.37 or later recommended)
+Choose one of the following:
+- **Node.js**: v22 or later
+- **Deno**: v1.37 or later
+- **Docker**: Latest version
+
+Additionally:
 - OpenAI API key
 - An MCP server running (default: http://localhost:3000/mcp)
 
 ## Installation
 
-Clone or download this project:
+### Option 1: Node.js (Recommended)
 
 ```bash
-cd /home/gem/workspace/rarb
+git clone https://github.com/r33drichards/rarb.git
+cd rarb
+npm install
+```
+
+### Option 2: Deno
+
+```bash
+git clone https://github.com/r33drichards/rarb.git
+cd rarb
+# No installation needed, dependencies are managed by Deno
+```
+
+### Option 3: Docker
+
+```bash
+git clone https://github.com/r33drichards/rarb.git
+cd rarb
+docker build -t r33drichards/rarb:latest .
+```
+
+Or pull from Docker Hub (once published):
+```bash
+docker pull r33drichards/rarb:latest
 ```
 
 ## Configuration
@@ -38,16 +67,24 @@ Or pass it via the `--api-key` flag when running the script.
 
 ### Basic Usage
 
-Run in interactive mode:
-
+**Node.js:**
 ```bash
-deno task start
+node index.js
 ```
 
-Or run directly:
-
+**Deno:**
 ```bash
+deno task start
+# or
 deno run --allow-net --allow-read --allow-write --allow-env main.ts
+```
+
+**Docker:**
+```bash
+docker run --rm \
+  -e OPENAI_API_KEY="your-key" \
+  --network host \
+  r33drichards/rarb:latest
 ```
 
 ### Command-Line Options
@@ -61,36 +98,88 @@ deno run --allow-net --allow-read --allow-write --allow-env main.ts
 
 ### Examples
 
-**Interactive Mode:**
+#### Interactive Mode
+
+**Node.js:**
 ```bash
-deno task start
+node index.js
 ```
 
-**Single Prompt:**
+**Docker:**
 ```bash
-deno run --allow-net --allow-read --allow-write --allow-env main.ts \
+docker run -it --rm \
+  -e OPENAI_API_KEY="your-key" \
+  --network host \
+  r33drichards/rarb:latest \
+  --url "http://localhost:8080/mcp"
+```
+
+#### Single Prompt
+
+**Node.js:**
+```bash
+node index.js \
   --prompt "go to craigslist and find free things in sf posted today"
 ```
 
-**Headless Mode:**
+**Docker:**
 ```bash
-deno run --allow-net --allow-read --allow-write --allow-env main.ts \
+docker run --rm \
+  -e OPENAI_API_KEY="your-key" \
+  --network host \
+  r33drichards/rarb:latest \
+  --prompt "go to craigslist and find free things in sf posted today"
+```
+
+#### Headless Mode with Output File
+
+**Node.js:**
+```bash
+node index.js \
   --headless \
   --prompt "go to craigslist and find free things in sf posted today and write to items.csv"
 ```
 
-**Custom MCP Server:**
+**Docker with volume mount:**
 ```bash
-deno run --allow-net --allow-read --allow-write --allow-env main.ts \
+docker run --rm \
+  -e OPENAI_API_KEY="your-key" \
+  --network host \
+  -v $(pwd)/output:/output \
+  r33drichards/rarb:latest \
+  --headless \
+  --url "http://localhost:8080/mcp" \
+  --prompt "go to craigslist and find free things in sf posted today and write to /output/items.csv"
+```
+
+#### Custom MCP Server
+
+**Node.js:**
+```bash
+node index.js \
   --url "http://localhost:8080/mcp" \
   --prompt "your prompt here"
 ```
 
-**Different Model:**
+#### Different Model
+
+**Node.js:**
 ```bash
-deno run --allow-net --allow-read --allow-write --allow-env main.ts \
+node index.js \
   --model "gpt-4-turbo" \
   --prompt "your prompt here"
+```
+
+#### Using Docker Compose
+
+Create a `.env` file with your API key:
+```bash
+echo "OPENAI_API_KEY=your-key-here" > .env
+```
+
+Then run:
+```bash
+docker-compose up
 ```
 
 ### Execution Modes
@@ -111,18 +200,33 @@ deno run --allow-net --allow-read --allow-write --allow-env main.ts \
 
 ## Example Use Case
 
-The original prompt from the gist:
+The original prompt from the gist - finding free items on Craigslist:
 
+**Node.js:**
 ```bash
-deno run --allow-net --allow-read --allow-write --allow-env main.ts \
-  --prompt "go to craigslist and find free things in sf posted today and then write the info to a csv in /home/gem/workspace/items.csv only include interesting things, if its junk i don't care. include the urls in the output. if already in items.csv don't include it twice"
+node index.js \
+  --url "http://localhost:8080/mcp" \
+  --headless \
+  --prompt "go to craigslist and find free things in sf posted today and then write the info to a csv in items.csv only include interesting things, if its junk i don't care. include the urls in the output. if already in items.csv don't include it twice"
+```
+
+**Docker:**
+```bash
+docker run --rm \
+  -e OPENAI_API_KEY="your-key" \
+  --network host \
+  -v $(pwd)/output:/output \
+  r33drichards/rarb:latest \
+  --url "http://localhost:8080/mcp" \
+  --headless \
+  --prompt "go to craigslist and find free things in sf posted today and write to /output/items.csv only include interesting things, include the urls"
 ```
 
 This will:
 1. Connect to the MCP server
 2. Use the available tools to scrape Craigslist
 3. Filter for interesting free items in San Francisco
-4. Write results to a CSV file
+4. Write results to a CSV file with URLs
 5. Avoid duplicates
 
 ## Output
@@ -136,24 +240,89 @@ The tool displays:
 
 ## Development
 
-Run with auto-reload on file changes:
+**Node.js:**
+```bash
+npm install
+node index.js
+```
 
+**Deno with auto-reload:**
 ```bash
 deno task dev
+```
+
+**Docker development:**
+```bash
+docker build -t r33drichards/rarb:dev .
+docker run --rm -it \
+  -e OPENAI_API_KEY="your-key" \
+  --network host \
+  r33drichards/rarb:dev
+```
+
+## Docker Details
+
+### Building the Image
+```bash
+docker build -t r33drichards/rarb:latest .
+```
+
+### Running with Environment Variables
+```bash
+docker run --rm \
+  -e OPENAI_API_KEY="your-key" \
+  r33drichards/rarb:latest --help
+```
+
+### Volume Mounts for Output Files
+```bash
+# Create output directory
+mkdir -p output
+
+# Run with volume mount
+docker run --rm \
+  -e OPENAI_API_KEY="your-key" \
+  -v $(pwd)/output:/output \
+  --network host \
+  r33drichards/rarb:latest \
+  --url "http://localhost:8080/mcp" \
+  --prompt "your prompt that writes to /output/file.csv"
+```
+
+### Docker Compose
+The `docker-compose.yml` file provides an easy way to run the agent:
+
+1. Create a `.env` file:
+```bash
+OPENAI_API_KEY=your-key-here
+```
+
+2. Edit `docker-compose.yml` to customize the command
+
+3. Run:
+```bash
+docker-compose up
 ```
 
 ## Troubleshooting
 
 **API Key Error:**
 - Ensure `OPENAI_API_KEY` is set or pass `--api-key`
+- For Docker: Pass via `-e OPENAI_API_KEY="your-key"`
 
 **MCP Server Connection Failed:**
 - Verify the MCP server is running
 - Check the URL with `--url` flag
+- For Docker: Use `--network host` to access localhost services
+- Or use `host.docker.internal` instead of `localhost` in the URL
 
-**Permission Errors:**
+**Permission Errors (Deno):**
 - Deno requires explicit permissions
 - The script needs: `--allow-net`, `--allow-read`, `--allow-write`, `--allow-env`
+
+**Docker File Access:**
+- Use volume mounts (`-v`) to access files from the host
+- Write output files to mounted directories
 
 ## License
 
