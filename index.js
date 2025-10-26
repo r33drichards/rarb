@@ -129,6 +129,19 @@ REMEMBER: You have access to many steps (${maxSteps} total). Use as many as need
     console.log(`Total Steps: ${response.steps.length}`);
     console.log(`Finish Reason: ${response.finishReason}`);
     console.log(`Usage: ${JSON.stringify(response.usage, null, 2)}`);
+    console.log(`\n--- Debug: Steps Detail ---`);
+    response.steps.forEach((step, idx) => {
+      console.log(`Step ${idx + 1}:`);
+      console.log(`  - stepType: ${step.stepType}`);
+      console.log(`  - finishReason: ${step.finishReason}`);
+      console.log(`  - toolCalls: ${step.toolCalls?.length || 0}`);
+      console.log(`  - toolResults: ${step.toolResults?.length || 0}`);
+      console.log(`  - text length: ${step.text?.length || 0}`);
+      console.log(`  - isContinued: ${step.isContinued}`);
+      console.log(`  - warnings: ${JSON.stringify(step.warnings)}`);
+    });
+    console.log(`\n--- Debug: Response Object Keys ---`);
+    console.log(`Available keys: ${Object.keys(response).join(', ')}`);
     console.log(`${'='.repeat(60)}\n`);
 
     return response;
