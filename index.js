@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 
-import { generateText, tool } from 'ai';
+import { generateText, tool, stepCountIs } from 'ai';
 import { experimental_createMCPClient } from '@ai-sdk/mcp';
 import { openai } from '@ai-sdk/openai';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Command } from 'commander';
 import { createInterface } from 'readline';
-import { z } from 'zod';
 
 const program = new Command();
 
@@ -18,7 +17,6 @@ program
   .option('-m, --model <model>', 'AI model to use', 'gpt-4o')
   .option('-p, --prompt <prompt>', 'Prompt to execute')
   .option('--headless', 'Run in headless mode (autonomous execution)', false)
-  .option('--max-steps <number>', 'Maximum number of steps', '20')
   .option('--api-key <key>', 'OpenAI API key (or set OPENAI_API_KEY env var)')
   .parse(process.argv);
 
@@ -49,7 +47,7 @@ async function initializeMCPClient(serverUrl) {
   }
 }
 
-async function executePrompt(prompt, tools, modelName, maxSteps) {
+async function executePrompt(prompt, tools, modelName) {
   try {
     console.log(`\n${'='.repeat(60)}`);
     console.log(`Prompt: ${prompt}`);
@@ -72,14 +70,14 @@ Your approach:
 
 If you encounter errors, work around them. If a task is impossible, explain why after attempting alternatives.
 
-REMEMBER: You have access to many steps (${maxSteps} total). Use as many as needed to finish the job completely.`;
+The system will allow you to execute as many steps as needed to complete the task fully.`;
 
     const response = await generateText({
       model: openai(modelName, {
         apiKey: options.apiKey || process.env.OPENAI_API_KEY,
       }),
       tools,
-      maxSteps: parseInt(maxSteps),
+      stopWhen: stepCountIs(100),
       system: systemPrompt,
       messages: [
         {
@@ -158,7 +156,7 @@ REMEMBER: You have access to many steps (${maxSteps} total). Use as many as need
   }
 }
 
-async function interactiveMode(tools, modelName, maxSteps) {
+async function interactiveMode(tools, modelName) {
   const rl = createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -185,7 +183,7 @@ async function interactiveMode(tools, modelName, maxSteps) {
     }
 
     try {
-      await executePrompt(input, tools, modelName, maxSteps);
+      await executePrompt(input, tools, modelName);
     } catch (error) {
       console.error('Error:', error.message);
     }
@@ -213,14 +211,14 @@ async function main() {
     if (options.headless) {
       // Headless mode: execute prompt and exit
       console.log('Running in headless mode...');
-      await executePrompt(options.prompt, tools, options.model, options.maxSteps);
+      await executePrompt(options.prompt, tools, options.model);
     } else if (options.prompt) {
       // Execute single prompt and then start interactive mode
-      await executePrompt(options.prompt, tools, options.model, options.maxSteps);
-      await interactiveMode(tools, options.model, options.maxSteps);
+      await executePrompt(options.prompt, tools, options.model);
+      await interactiveMode(tools, options.model);
     } else {
       // Interactive mode only
-      await interactiveMode(tools, options.model, options.maxSteps);
+      await interactiveMode(tools, options.model);
     }
   } catch (error) {
     console.error('Fatal error:', error);
