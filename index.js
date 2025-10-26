@@ -15,7 +15,7 @@ program
   .description('CLI agent for MCP tools with HTTP transport')
   .version('1.0.0')
   .option('-u, --url <url>', 'MCP server URL', 'http://localhost:3000/mcp')
-  .option('-m, --model <model>', 'AI model to use', 'gpt-5')
+  .option('-m, --model <model>', 'AI model to use', 'gpt-4o')
   .option('-p, --prompt <prompt>', 'Prompt to execute')
   .option('--headless', 'Run in headless mode (autonomous execution)', false)
   .option('--max-steps <number>', 'Maximum number of steps', '20')
@@ -55,7 +55,22 @@ async function executePrompt(prompt, tools, modelName, maxSteps) {
     console.log(`Prompt: ${prompt}`);
     console.log(`${'='.repeat(60)}\n`);
 
-    const systemPrompt = ``;
+    const systemPrompt = `You are an AI assistant with access to browser automation and file operations tools.
+
+When given a task:
+1. Break it down into steps
+2. Use the available tools to accomplish each step
+3. Continue using tools until the task is complete
+4. Provide clear updates about what you're doing
+
+Available tool categories:
+- Browser automation (navigate, screenshot, execute actions)
+- File operations (read, write, edit files)
+- Code execution
+- Bash commands
+- Markdown conversion
+
+Always complete the full task before stopping. If you encounter an error, try to work around it or inform the user clearly.`;
 
     const response = await generateText({
       model: openai(modelName, {
@@ -72,20 +87,34 @@ async function executePrompt(prompt, tools, modelName, maxSteps) {
       ],
       onStepFinish: (step) => {
         console.log(`\n--- Step ${step.stepNumber} ---`);
+
+        // Debug: log the full step structure
+        console.log('Step finish reason:', step.finishReason);
+        console.log('Step has toolCalls:', !!step.toolCalls);
+        console.log('Step has toolResults:', !!step.toolResults);
+
         if (step.toolCalls && step.toolCalls.length > 0) {
           console.log('Tool Calls:');
           step.toolCalls.forEach((call) => {
-            console.log(`  - ${call.toolName}(${JSON.stringify(call.args, null, 2)})`);
+            // In AI SDK 5.0, use 'input' instead of 'args'
+            console.log(`  - ${call.toolName}(${JSON.stringify(call.input || call.args, null, 2)})`);
           });
         }
         if (step.toolResults && step.toolResults.length > 0) {
           console.log('Tool Results:');
           step.toolResults.forEach((result) => {
-            console.log(`  - ${result.toolName}: ${JSON.stringify(result.result, null, 2)}`);
+            // In AI SDK 5.0, use 'output' instead of 'result'
+            const output = result.output || result.result;
+            console.log(`  - ${result.toolName}: ${JSON.stringify(output, null, 2)}`);
           });
         }
         if (step.text) {
           console.log(`Response: ${step.text}`);
+        }
+
+        // Log response messages for debugging
+        if (step.responseMessages && step.responseMessages.length > 0) {
+          console.log(`Response messages count: ${step.responseMessages.length}`);
         }
       },
     });
