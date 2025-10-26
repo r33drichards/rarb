@@ -21,7 +21,7 @@
   "dependencies": {
     "ai": "^5.0.0",
     "@ai-sdk/mcp": "^0.0.1",
-    "@ai-sdk/openai": "^1.0.12",
+    "@ai-sdk/openai": "^2.0.0",
     "@modelcontextprotocol/sdk": "^1.0.4",
     "commander": "^12.1.0"
   }
