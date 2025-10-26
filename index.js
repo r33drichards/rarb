@@ -32,30 +32,50 @@ if (!options.apiKey && !process.env.OPENAI_API_KEY) {
 
 let client;
 
-// Convert JSON Schema to Zod schema (improved version)
+// Convert JSON Schema to Zod schema (improved version with better handling)
 function jsonSchemaToZod(schema) {
   if (!schema || typeof schema !== 'object') {
     return z.any();
   }
 
-  if (schema.type === 'object' && schema.properties) {
+  // Handle union types (oneOf, anyOf)
+  if (schema.oneOf || schema.anyOf) {
+    const variants = schema.oneOf || schema.anyOf;
+    if (variants.length === 0) return z.any();
+    if (variants.length === 1) return jsonSchemaToZod(variants[0]);
+
+    // For multiple variants, use z.union
+    const zodSchemas = variants.map(v => jsonSchemaToZod(v));
+    return z.union(zodSchemas);
+  }
+
+  // Handle object type
+  if (schema.type === 'object' || schema.properties) {
     const shape = {};
     const requiredFields = new Set(schema.required || []);
 
-    for (const [key, value] of Object.entries(schema.properties)) {
-      let zodField = jsonSchemaToZod(value);
+    // Process properties
+    if (schema.properties) {
+      for (const [key, value] of Object.entries(schema.properties)) {
+        let zodField = jsonSchemaToZod(value);
 
-      // Make field optional if it's not in the required array
-      if (!requiredFields.has(key)) {
-        zodField = zodField.optional();
+        // Make field optional if it's not in the required array
+        if (!requiredFields.has(key)) {
+          zodField = zodField.optional();
+        }
+
+        // Add default value if specified
+        if (value.default !== undefined) {
+          zodField = zodField.default(value.default);
+        }
+
+        shape[key] = zodField;
       }
+    }
 
-      // Add default value if specified
-      if (value.default !== undefined) {
-        zodField = zodField.default(value.default);
-      }
-
-      shape[key] = zodField;
+    // If no properties but type is object, allow any object
+    if (Object.keys(shape).length === 0) {
+      return z.record(z.any());
     }
 
     return z.object(shape);
@@ -79,6 +99,16 @@ function jsonSchemaToZod(schema) {
 
   if (schema.type === 'array') {
     return z.array(jsonSchemaToZod(schema.items || {}));
+  }
+
+  // Handle null type
+  if (schema.type === 'null') {
+    return z.null();
+  }
+
+  // If type is not specified but properties exist, treat as object
+  if (schema.properties && !schema.type) {
+    return jsonSchemaToZod({ ...schema, type: 'object' });
   }
 
   return z.any();
