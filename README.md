@@ -3,7 +3,7 @@
 [![Docker Image](https://img.shields.io/badge/docker-wholelottahoopla%2Frarb-blue?logo=docker)](https://hub.docker.com/r/wholelottahoopla/rarb)
 [![Build Status](https://github.com/r33drichards/rarb/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/r33drichards/rarb/actions/workflows/docker-publish.yml)
 
-A command-line tool that connects to an MCP (Model Context Protocol) server and executes prompts using AI models via OpenAI's API. Available in both Node.js and Deno versions.
+A command-line tool that connects to an MCP (Model Context Protocol) server and executes prompts using AI models via OpenAI's API.
 
 ## Features
 
@@ -19,7 +19,6 @@ A command-line tool that connects to an MCP (Model Context Protocol) server and 
 
 Choose one of the following:
 - **Node.js**: v22 or later
-- **Deno**: v1.37 or later
 - **Docker**: Latest version
 
 Additionally:
@@ -36,15 +35,7 @@ cd rarb
 npm install
 ```
 
-### Option 2: Deno
-
-```bash
-git clone https://github.com/r33drichards/rarb.git
-cd rarb
-# No installation needed, dependencies are managed by Deno
-```
-
-### Option 3: Docker
+### Option 2: Docker
 
 **Pull from Docker Hub (recommended):**
 ```bash
@@ -79,13 +70,6 @@ Or pass it via the `--api-key` flag when running the script.
 **Node.js:**
 ```bash
 node index.js
-```
-
-**Deno:**
-```bash
-deno task start
-# or
-deno run --allow-net --allow-read --allow-write --allow-env main.ts
 ```
 
 **Docker:**
@@ -255,11 +239,6 @@ npm install
 node index.js
 ```
 
-**Deno with auto-reload:**
-```bash
-deno task dev
-```
-
 **Docker development:**
 ```bash
 docker build -t wholelottahoopla/rarb:dev .
@@ -324,10 +303,6 @@ docker-compose up
 - Check the URL with `--url` flag
 - For Docker: Use `--network host` to access localhost services
 - Or use `host.docker.internal` instead of `localhost` in the URL
-
-**Permission Errors (Deno):**
-- Deno requires explicit permissions
-- The script needs: `--allow-net`, `--allow-read`, `--allow-write`, `--allow-env`
 
 **Docker File Access:**
 - Use volume mounts (`-v`) to access files from the host

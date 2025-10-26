@@ -2,12 +2,6 @@
 node_modules
 npm-debug.log
 
-# Deno (not needed in Docker)
-.deno/
-deno.lock
-main.ts
-deno.json
-
 # Git
 .git
 .gitignore
