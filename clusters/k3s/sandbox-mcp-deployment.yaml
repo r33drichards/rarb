@@ -43,7 +43,7 @@ spec:
           privileged: true  # Required for Docker-in-Docker
         volumeMounts:
         - name: workspace
-          mountPath: /home/gem
+          mountPath: /home/gem/workspace
         - name: dind-storage
           mountPath: /var/lib/docker
       volumes:
