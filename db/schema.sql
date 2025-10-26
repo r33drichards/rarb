@@ -4,6 +4,9 @@
 -- Create the database if running this manually (not needed if using init script)
 -- CREATE DATABASE rarb_outputs;
 
+-- Enable pgcrypto extension for SHA256 hashing
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- Create table for storing agent outputs
 CREATE TABLE IF NOT EXISTS agent_outputs (
     id SERIAL PRIMARY KEY,
@@ -15,7 +18,7 @@ CREATE TABLE IF NOT EXISTS agent_outputs (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     -- Computed hash for duplicate detection based on title + url
     content_hash VARCHAR(64) GENERATED ALWAYS AS (
-        encode(sha256(COALESCE(title, '') || '|' || COALESCE(url, '')), 'hex')
+        encode(digest(COALESCE(title, '') || '|' || COALESCE(url, ''), 'sha256'), 'hex')
     ) STORED,
     CONSTRAINT unique_content UNIQUE (content_hash)
 );
