@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mcp-agent-secrets-test
+  namespace: default
+type: Opaque
+stringData:
+  OPENAI_API_KEY: "YOUR_API_KEY_HERE"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mcp-agent-config-test
+  namespace: default
+data:
+  MCP_URL: "http://sandbox-mcp:8091/mcp"
+  MODEL: "gpt-4o"
+  MAX_STEPS: "100"
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mcp-agent-cronjob-test
+  namespace: default
+spec:
+  # Run every 5 minutes for testing (adjust as needed)
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  suspend: true  # Start suspended for testing - set to false when ready
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: mcp-agent-cronjob-test
+        spec:
+          containers:
+          - name: mcp-agent
+            image: wholelottahoopla/rarb:latest
+            imagePullPolicy: Always
+            command: ["node", "index.js"]
+            args:
+              - "--url"
+              - "$(MCP_URL)"
+              - "--model"
+              - "$(MODEL)"
+              - "--max-steps"
+              - "$(MAX_STEPS)"
+              - "--headless"
+              - "--prompt"
+              - "go to craigslist and find free things in sf posted today and then write the info to a csv in /home/gem/workspace/items.csv only include interesting things, if its junk i don't care. include the urls in the output. if already in items.csv don't include it twice"
+            env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mcp-agent-secrets-test
+                  key: OPENAI_API_KEY
+            - name: MCP_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: mcp-agent-config-test
+                  key: MCP_URL
+            - name: MODEL
+              valueFrom:
+                configMapKeyRef:
+                  name: mcp-agent-config-test
+                  key: MODEL
+            - name: MAX_STEPS
+              valueFrom:
+                configMapKeyRef:
+                  name: mcp-agent-config-test
+                  key: MAX_STEPS
+            - name: NODE_ENV
+              value: "production"
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+              limits:
+                memory: "512Mi"
+                cpu: "500m"
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 1001
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+            volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: output
+              mountPath: /output
+            - name: modified-code
+              mountPath: /app/index.js
+              subPath: index.js
+          volumes:
+          - name: tmp
+            emptyDir: {}
+          - name: output
+            emptyDir: {}
+          - name: modified-code
+            configMap:
+              name: mcp-agent-code
+          restartPolicy: OnFailure

@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sandbox-mcp
+  namespace: default
+  labels:
+    app: sandbox-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sandbox-mcp
+  template:
+    metadata:
+      labels:
+        app: sandbox-mcp
+    spec:
+      containers:
+      - name: sandbox
+        image: ghcr.io/agent-infra/sandbox:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8091
+          name: python-server
+          protocol: TCP
+        - containerPort: 8100
+          name: browser
+          protocol: TCP
+        - containerPort: 8079
+          name: mcp-hub
+          protocol: TCP
+        env:
+        - name: WORKSPACE
+          value: "/home/gem"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        securityContext:
+          privileged: true  # Required for Docker-in-Docker
+        volumeMounts:
+        - name: workspace
+          mountPath: /home/gem/workspace
+        - name: dind-storage
+          mountPath: /var/lib/docker
+      volumes:
+      - name: workspace
+        emptyDir: {}
+      - name: dind-storage
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sandbox-mcp
+  namespace: default
+  labels:
+    app: sandbox-mcp
+spec:
+  selector:
+    app: sandbox-mcp
+  ports:
+  - name: python-server
+    port: 8091
+    targetPort: 8091
+    protocol: TCP
+  - name: browser
+    port: 8100
+    targetPort: 8100
+    protocol: TCP
+  - name: mcp-hub
+    port: 8079
+    targetPort: 8079
+    protocol: TCP
+  type: ClusterIP
