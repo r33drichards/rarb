@@ -5,5 +5,5 @@ metadata:
   namespace: mcp-agent
 data:
   MCP_URL: "http://localhost:3000/mcp"
-  MODEL: "gpt-4o"
-  MAX_STEPS: "10"
+  MODEL: "gpt-5"
+  MAX_STEPS: "20"
