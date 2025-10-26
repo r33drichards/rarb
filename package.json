@@ -19,7 +19,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ai": "^3.4.33",
+    "ai": "^5.0.0",
     "@ai-sdk/openai": "^1.0.12",
     "@modelcontextprotocol/sdk": "^1.0.4",
     "commander": "^12.1.0"
