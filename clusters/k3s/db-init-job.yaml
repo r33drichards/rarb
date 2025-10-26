@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rarb-db-init
+  namespace: default
+spec:
+  ttlSecondsAfterFinished: 600  # Clean up 10 minutes after completion
+  template:
+    metadata:
+      labels:
+        app: rarb-db-init
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: db-init
+        image: wholelottahoopla/rarb:latest
+        imagePullPolicy: Always
+        command: ["/bin/bash", "/app/db/init.sh"]
+        env:
+        - name: DB_HOST
+          value: "postgres"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: "rarb_outputs"
+        - name: DB_USER
+          value: "sandbox"
+        - name: DB_PASSWORD
+          value: "CHANGE_ME"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: tmp
+        emptyDir: {}
