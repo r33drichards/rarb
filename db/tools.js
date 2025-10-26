@@ -10,7 +10,7 @@ export function createDatabaseTools() {
   return {
     saveItemToDatabase: tool({
       description: 'Save a single item to the database. Automatically prevents duplicates based on title and URL. Returns the saved item with ID and timestamps. Optional fields can be empty strings.',
-      parameters: z.object({
+      inputSchema: z.object({
         title: z.string().describe('Title of the item (required)'),
         description: z.string().describe('Description of the item (can be empty string)'),
         url: z.string().describe('URL of the item (can be empty string)'),
@@ -44,7 +44,7 @@ export function createDatabaseTools() {
 
     saveItemsToDatabase: tool({
       description: 'Save multiple items to the database in a single batch operation. More efficient than saving items one by one. Automatically prevents duplicates and provides a summary of results. Optional fields can be empty strings.',
-      parameters: z.object({
+      inputSchema: z.object({
         items: z.array(z.object({
           title: z.string().describe('Title of the item'),
           description: z.string().describe('Description (can be empty string)'),
@@ -71,7 +71,7 @@ export function createDatabaseTools() {
 
     getRecentItems: tool({
       description: 'Get recently saved items from the database. Useful for checking what has already been saved to avoid duplicates.',
-      parameters: z.object({
+      inputSchema: z.object({
         limit: z.number().describe('Maximum number of items to return (default: 100)').default(100),
         days: z.number().describe('Number of days to look back (default: 7)').default(7),
       }),
@@ -87,7 +87,7 @@ export function createDatabaseTools() {
 
     checkItemExists: tool({
       description: 'Check if an item with a specific URL already exists in the database. Returns true if exists, false otherwise.',
-      parameters: z.object({
+      inputSchema: z.object({
         url: z.string().describe('URL to check for existence'),
       }),
       execute: async ({ url }) => {
