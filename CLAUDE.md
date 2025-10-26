@@ -240,4 +240,140 @@ Build cache is enabled for faster subsequent builds using GitHub Actions cache.
 
 This allows safe testing of branch commits without affecting production deployments.
 
+## Branch Development & Testing Workflow
+
+### Important: Flux CD Management
+
+The `mcp-agent-cronjob` is managed by Flux CD, which automatically reconciles the cronjob configuration from the Git repository. This means:
+
+1. **Direct kubectl changes will be reverted** - Flux will reset the cronjob to match the repository state
+2. **Changes must be committed to Git** - All cronjob configuration changes need to be in `clusters/k3s/cronjob.yaml`
+3. **Testing branches requires specific workflow** - See below for how to test branch commits
+
+### Complete Branch Testing Workflow
+
+When developing on a feature branch (example: `vk/7a32-save-output-to-p`):
+
+```bash
+# 1. Make your code changes
+vim index.js db/tools.js  # or any files
+
+# 2. Commit and push to create a PR
+git add .
+git commit -m "Your changes"
+git push --set-upstream origin your-branch-name
+
+# 3. Create PR (triggers Docker build)
+gh pr create --title "Your title" --body "Description"
+
+# 4. Wait for build and get the commit SHA
+gh run watch --exit-status  # Wait for build to complete
+COMMIT_SHA=$(gh run view --json headSha -q .headSha)
+
+# Or get SHA from build logs:
+gh run view <run-id> --log | grep "wholelottahoopla/rarb:" | head -1 | grep -oE '[0-9a-f]{40}'
+
+# 5. Test with the specific commit image
+# Option A: Create one-off test job without modifying cronjob
+kubectl create job mcp-agent-test-$(date +%s) --from=cronjob/mcp-agent-cronjob -n default \
+  --dry-run=client -o yaml | \
+  sed "s|wholelottahoopla/rarb:latest|wholelottahoopla/rarb:$COMMIT_SHA|g" | \
+  kubectl apply -f -
+
+# Option B: Temporarily update cronjob (will be reverted by Flux)
+kubectl set image cronjob/mcp-agent-cronjob -n default \
+  mcp-agent=wholelottahoopla/rarb:$COMMIT_SHA
+kubectl create job mcp-agent-test-$(date +%s) --from=cronjob/mcp-agent-cronjob -n default
+
+# 6. Monitor the test
+POD_NAME=$(kubectl get pods -n default | grep mcp-agent-test | tail -1 | awk '{print $1}')
+kubectl logs -f $POD_NAME -n default
+
+# 7. Check results
+kubectl get jobs -n default | grep mcp-agent-test
+kubectl logs $POD_NAME -n default | grep -E "(Error|success|database)"
+```
+
+### Testing Database Features
+
+When testing database-related changes:
+
+```bash
+# Initialize the database (one time)
+kubectl apply -f clusters/k3s/db-init-job.yaml
+
+# Monitor database initialization
+kubectl get jobs -n default | grep rarb-db-init
+kubectl logs <db-init-pod-name> -n default
+
+# Query database to verify data
+kubectl run -it --rm pg-client --image=postgres:16-alpine --restart=Never \
+  --env="PGPASSWORD=CHANGE_ME" -- \
+  psql -h postgres -U sandbox -d rarb_outputs -c \
+  "SELECT id, title, url, created_at FROM agent_outputs ORDER BY created_at DESC LIMIT 10;"
+```
+
+### Common Debugging Steps on Branch
+
+1. **Check if tools are loaded correctly:**
+```bash
+kubectl logs $POD_NAME -n default | grep "Loaded.*tools"
+# Should show: "✓ Loaded 14 tools (10 MCP + 4 database)"
+```
+
+2. **Check database connection:**
+```bash
+kubectl logs $POD_NAME -n default | head -20
+# Should show database initialization messages
+```
+
+3. **Check for schema errors:**
+```bash
+kubectl logs $POD_NAME -n default | grep -E "(schema|Error)"
+```
+
+4. **View full execution flow:**
+```bash
+kubectl logs $POD_NAME -n default --tail=500
+```
+
+### Troubleshooting
+
+**Issue**: Cronjob keeps reverting to old configuration
+**Cause**: Flux CD is managing the cronjob and syncing from Git
+**Solution**: Commit changes to `clusters/k3s/cronjob.yaml` in your branch
+
+**Issue**: `--max-steps` error
+**Cause**: Old cronjob configuration in Git
+**Solution**: Update `clusters/k3s/cronjob.yaml` to remove --max-steps argument
+
+**Issue**: Database tools not loading
+**Cause**: Missing DB environment variables
+**Solution**: Ensure cronjob.yaml includes DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
+
+**Issue**: Zod schema validation error "type: None"
+**Cause**: Using `.optional()` in Zod schemas with AI SDK
+**Solution**: Use required strings with `.describe()` that mention "(can be empty string)"
+
+### Merging to Production
+
+Once testing is complete on your branch:
+
+```bash
+# 1. Merge PR to main
+gh pr merge --squash  # or --merge or --rebase
+
+# 2. Flux will automatically:
+#    - Detect the changes in main branch
+#    - Update the cronjob configuration
+#    - Pull the new 'latest' Docker image
+
+# 3. Verify deployment
+kubectl get cronjob mcp-agent-cronjob -n default -o yaml | grep image:
+# Should show: image: wholelottahoopla/rarb:latest
+
+# 4. Monitor next scheduled run
+kubectl get cronjobs mcp-agent-cronjob -n default -o wide
+```
+
 
