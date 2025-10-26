@@ -36,7 +36,7 @@ spec:
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: mcp-agent-secrets
+                  name: mcp-agent-secrets-test
                   key: OPENAI_API_KEY
             - name: MCP_URL
               valueFrom:
