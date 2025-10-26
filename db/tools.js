@@ -12,13 +12,18 @@ export function createDatabaseTools() {
       description: 'Save a single item to the database. Automatically prevents duplicates based on title and URL. Returns the saved item with ID and timestamps.',
       parameters: z.object({
         title: z.string().describe('Title of the item (required)'),
-        description: z.string().optional().describe('Description of the item'),
-        url: z.string().optional().describe('URL of the item'),
-        category: z.string().optional().describe('Category of the item (e.g., "free stuff", "furniture", "electronics")'),
+        description: z.string().describe('Description of the item').default(''),
+        url: z.string().describe('URL of the item').default(''),
+        category: z.string().describe('Category of the item (e.g., "free stuff", "furniture", "electronics")').default(''),
       }),
-      execute: async ({ title, description, url, category }) => {
+      execute: async ({ title, description = '', url = '', category = '' }) => {
         try {
-          const result = await saveOutput({ title, description, url, category });
+          const result = await saveOutput({
+            title,
+            description: description || undefined,
+            url: url || undefined,
+            category: category || undefined
+          });
           return {
             success: true,
             message: 'Item saved successfully',
@@ -42,13 +47,20 @@ export function createDatabaseTools() {
       parameters: z.object({
         items: z.array(z.object({
           title: z.string().describe('Title of the item'),
-          description: z.string().optional().describe('Description of the item'),
-          url: z.string().optional().describe('URL of the item'),
-          category: z.string().optional().describe('Category of the item'),
+          description: z.string().describe('Description of the item').default(''),
+          url: z.string().describe('URL of the item').default(''),
+          category: z.string().describe('Category of the item').default(''),
         })).describe('Array of items to save'),
       }),
       execute: async ({ items }) => {
-        const results = await saveOutputBatch(items);
+        // Clean up empty strings to undefined for database
+        const cleanedItems = items.map(item => ({
+          title: item.title,
+          description: item.description || undefined,
+          url: item.url || undefined,
+          category: item.category || undefined,
+        }));
+        const results = await saveOutputBatch(cleanedItems);
         return {
           success: true,
           message: `Batch save completed: ${results.saved} saved, ${results.updated} updated, ${results.failed} failed`,
