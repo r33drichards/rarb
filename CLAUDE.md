@@ -11,6 +11,17 @@ This document outlines the development workflow for debugging and testing the RA
 
 ## Development Workflow
 
+### Quick Reference: Main vs Branch Development
+
+**Main Branch (Production):**
+- Builds image tagged as `latest` and `<commit-sha>`
+- Used by cronjob (pulls `latest`)
+
+**Feature Branches/PRs (Testing):**
+- Builds image tagged only as `<commit-sha>`
+- Allows testing specific commits without affecting production
+- Each PR commit gets its own docker image
+
 ### 1. Make Code Changes
 Edit `index.js` locally with your changes.
 
@@ -35,9 +46,49 @@ gh run list --limit 5
 
 # Watch specific run
 gh run watch <run-id> --exit-status
+
+# Get the commit SHA from recent run
+gh run view <run-id> --json headSha -q .headSha
 ```
 
-### 4. Create Manual Test Job
+### 4. Testing Branch/PR Commits (Using Commit SHA)
+
+When working on a feature branch or PR, you can test specific commits without affecting the production `latest` tag:
+
+```bash
+# 1. Get your commit SHA (full 40-character version)
+COMMIT_SHA=$(git rev-parse HEAD)
+echo "Testing commit: $COMMIT_SHA"
+
+# 2. Wait for GitHub Actions to build and push the image
+gh run watch --exit-status
+
+# 3. Update the cronjob to use the specific commit SHA
+kubectl set image cronjob/mcp-agent-cronjob -n default \
+  mcp-agent=wholelottahoopla/rarb:$COMMIT_SHA
+
+# 4. Create a test job from the updated cronjob
+kubectl create job mcp-agent-test-$(date +%s) --from=cronjob/mcp-agent-cronjob -n default
+
+# 5. Monitor the test job
+kubectl get pods -n default | grep mcp-agent-test
+kubectl logs <pod-name> -n default --tail=500
+
+# 6. When done testing, restore cronjob to use 'latest'
+kubectl set image cronjob/mcp-agent-cronjob -n default \
+  mcp-agent=wholelottahoopla/rarb:latest
+```
+
+**Alternative: One-off test without modifying cronjob**
+```bash
+# Create a test job with a specific commit SHA without changing the cronjob
+COMMIT_SHA=$(git rev-parse HEAD)
+kubectl create job mcp-agent-test-$(date +%s) --from=cronjob/mcp-agent-cronjob -n default --dry-run=client -o yaml | \
+  sed "s|wholelottahoopla/rarb:latest|wholelottahoopla/rarb:$COMMIT_SHA|g" | \
+  kubectl apply -f -
+```
+
+### 5. Create Manual Test Job (Production/Latest)
 Once the build completes, create a manual test job from the cronjob:
 
 ```bash
@@ -46,7 +97,7 @@ kubectl create job mcp-agent-test-$(date +%s) --from=cronjob/mcp-agent-cronjob -
 
 The cronjob is configured with `imagePullPolicy: Always`, so it automatically pulls the latest image.
 
-### 5. Monitor Job Execution
+### 6. Monitor Job Execution
 ```bash
 # Check job status
 kubectl get jobs -n default | grep mcp-agent
@@ -58,7 +109,7 @@ kubectl get pods -n default | grep mcp-agent-test
 kubectl logs <pod-name> -n default --tail=500
 ```
 
-### 6. Check Cronjob Execution
+### 7. Check Cronjob Execution
 ```bash
 # View cronjob status
 kubectl get cronjobs mcp-agent-cronjob -n default -o wide
@@ -70,7 +121,7 @@ kubectl get jobs -n default | grep mcp-agent-cronjob
 kubectl get jobs -n default --sort-by=.metadata.creationTimestamp | grep mcp-agent-cronjob | tail -1 | awk '{print $1}' | xargs -I {} kubectl logs job/{} -n default
 ```
 
-### 7. Clean Up Test Jobs
+### 8. Clean Up Test Jobs
 ```bash
 # Delete specific test job
 kubectl delete job <job-name> -n default
@@ -173,3 +224,20 @@ The GitHub Actions workflow builds for multiple platforms:
 - linux/arm64
 
 Build cache is enabled for faster subsequent builds using GitHub Actions cache.
+
+### Image Tagging Strategy
+
+**Main Branch:**
+- Tags: `latest`, `<full-commit-sha>`
+- Pushes to: Docker Hub
+- Used by: Production cronjob
+
+**Feature Branches/PRs:**
+- Tags: `<full-commit-sha>`
+- Pushes to: Docker Hub
+- Used by: Testing specific commits
+- Does NOT update `latest` tag
+
+This allows safe testing of branch commits without affecting production deployments.
+
+
