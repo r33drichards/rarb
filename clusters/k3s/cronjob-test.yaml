@@ -13,9 +13,9 @@ metadata:
   name: mcp-agent-config-test
   namespace: default
 data:
-  MCP_URL: "http://localhost:3000/mcp"
+  MCP_URL: "http://sandbox-mcp:8091/mcp"
   MODEL: "gpt-4o"
-  MAX_STEPS: "10"
+  MAX_STEPS: "100"
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -94,9 +94,15 @@ spec:
               mountPath: /tmp
             - name: output
               mountPath: /output
+            - name: modified-code
+              mountPath: /app/index.js
+              subPath: index.js
           volumes:
           - name: tmp
             emptyDir: {}
           - name: output
             emptyDir: {}
+          - name: modified-code
+            configMap:
+              name: mcp-agent-code
           restartPolicy: OnFailure
