@@ -9,14 +9,14 @@ import { saveOutput, saveOutputBatch, getRecentOutputs, itemExists } from './dat
 export function createDatabaseTools() {
   return {
     saveItemToDatabase: tool({
-      description: 'Save a single item to the database. Automatically prevents duplicates based on title and URL. Returns the saved item with ID and timestamps.',
+      description: 'Save a single item to the database. Automatically prevents duplicates based on title and URL. Returns the saved item with ID and timestamps. Optional fields can be empty strings.',
       parameters: z.object({
         title: z.string().describe('Title of the item (required)'),
-        description: z.string().describe('Description of the item').default(''),
-        url: z.string().describe('URL of the item').default(''),
-        category: z.string().describe('Category of the item (e.g., "free stuff", "furniture", "electronics")').default(''),
+        description: z.string().describe('Description of the item (can be empty string)'),
+        url: z.string().describe('URL of the item (can be empty string)'),
+        category: z.string().describe('Category of the item like "free stuff" (can be empty string)'),
       }),
-      execute: async ({ title, description = '', url = '', category = '' }) => {
+      execute: async ({ title, description, url, category }) => {
         try {
           const result = await saveOutput({
             title,
@@ -43,13 +43,13 @@ export function createDatabaseTools() {
     }),
 
     saveItemsToDatabase: tool({
-      description: 'Save multiple items to the database in a single batch operation. More efficient than saving items one by one. Automatically prevents duplicates and provides a summary of results.',
+      description: 'Save multiple items to the database in a single batch operation. More efficient than saving items one by one. Automatically prevents duplicates and provides a summary of results. Optional fields can be empty strings.',
       parameters: z.object({
         items: z.array(z.object({
           title: z.string().describe('Title of the item'),
-          description: z.string().describe('Description of the item').default(''),
-          url: z.string().describe('URL of the item').default(''),
-          category: z.string().describe('Category of the item').default(''),
+          description: z.string().describe('Description (can be empty string)'),
+          url: z.string().describe('URL (can be empty string)'),
+          category: z.string().describe('Category (can be empty string)'),
         })).describe('Array of items to save'),
       }),
       execute: async ({ items }) => {
