@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import { generateText, tool } from 'ai';
+import { experimental_createMCPClient } from '@ai-sdk/mcp';
 import { openai } from '@ai-sdk/openai';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Command } from 'commander';
 import { createInterface } from 'readline';
@@ -170,30 +170,12 @@ async function initializeMCPClient(serverUrl) {
     console.log(`\nConnecting to MCP server at ${serverUrl}...`);
     const transport = new StreamableHTTPClientTransport(new URL(serverUrl));
 
-    const mcpClient = new Client(
-      {
-        name: 'mcp-agent-client',
-        version: '1.0.0',
-      },
-      {
-        capabilities: {},
-      }
-    );
+    const mcpClient = await experimental_createMCPClient({
+      transport,
+    });
 
-    await mcpClient.connect(transport);
     console.log('✓ Connected to MCP server');
-
-    return {
-      client: mcpClient,
-      async tools() {
-        return await mcpClient.listTools();
-      },
-      async close() {
-        if (mcpClient && typeof mcpClient.close === 'function') {
-          await mcpClient.close();
-        }
-      }
-    };
+    return mcpClient;
   } catch (error) {
     console.error(`Failed to connect to MCP server: ${error.message}`);
     throw error;
