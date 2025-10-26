@@ -32,6 +32,57 @@ if (!options.apiKey && !process.env.OPENAI_API_KEY) {
 
 let client;
 
+// Sanitize JSON Schema for GPT-5 strict validation
+function sanitizeJsonSchema(schema) {
+  if (!schema || typeof schema !== 'object') {
+    return schema;
+  }
+
+  const sanitized = { ...schema };
+
+  // Remove additionalProperties if it doesn't have a type
+  if (sanitized.additionalProperties !== undefined) {
+    if (typeof sanitized.additionalProperties === 'object' && !sanitized.additionalProperties.type) {
+      delete sanitized.additionalProperties;
+    } else if (sanitized.additionalProperties === true) {
+      // Convert true to proper schema
+      delete sanitized.additionalProperties;
+    } else if (sanitized.additionalProperties === false) {
+      // Keep false as is
+    } else if (typeof sanitized.additionalProperties === 'object') {
+      sanitized.additionalProperties = sanitizeJsonSchema(sanitized.additionalProperties);
+    }
+  }
+
+  // Recursively sanitize properties
+  if (sanitized.properties) {
+    sanitized.properties = Object.fromEntries(
+      Object.entries(sanitized.properties).map(([key, value]) => [
+        key,
+        sanitizeJsonSchema(value)
+      ])
+    );
+  }
+
+  // Recursively sanitize items (for arrays)
+  if (sanitized.items) {
+    sanitized.items = sanitizeJsonSchema(sanitized.items);
+  }
+
+  // Recursively sanitize oneOf/anyOf/allOf
+  if (sanitized.oneOf) {
+    sanitized.oneOf = sanitized.oneOf.map(s => sanitizeJsonSchema(s));
+  }
+  if (sanitized.anyOf) {
+    sanitized.anyOf = sanitized.anyOf.map(s => sanitizeJsonSchema(s));
+  }
+  if (sanitized.allOf) {
+    sanitized.allOf = sanitized.allOf.map(s => sanitizeJsonSchema(s));
+  }
+
+  return sanitized;
+}
+
 // Convert JSON Schema to Zod schema (improved version with better handling)
 function jsonSchemaToZod(schema) {
   if (!schema || typeof schema !== 'object') {
@@ -139,8 +190,13 @@ async function initializeMCPClient(serverUrl) {
         const tools = {};
 
         for (const mcpTool of toolsList.tools) {
-          const zodSchema = mcpTool.inputSchema
-            ? jsonSchemaToZod(mcpTool.inputSchema)
+          // Sanitize the input schema for GPT-5 compatibility
+          const sanitizedSchema = mcpTool.inputSchema
+            ? sanitizeJsonSchema(mcpTool.inputSchema)
+            : {};
+
+          const zodSchema = sanitizedSchema
+            ? jsonSchemaToZod(sanitizedSchema)
             : z.object({});
 
           tools[mcpTool.name] = tool({
