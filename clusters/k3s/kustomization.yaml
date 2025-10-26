@@ -5,7 +5,6 @@ namespace: mcp-agent
 
 resources:
   - namespace.yaml
-  - deployment.yaml
   - service.yaml
   - cronjob.yaml
 

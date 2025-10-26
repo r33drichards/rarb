@@ -4,12 +4,12 @@ metadata:
   name: mcp-agent-cronjob
   namespace: mcp-agent
 spec:
-  # Run every day at 2 AM (adjust as needed for testing)
-  schedule: "0 2 * * *"
-  # For testing, you can use "*/5 * * * *" to run every 5 minutes
+  # Run every 5 minutes for testing (change to "0 2 * * *" for daily at 2 AM)
+  schedule: "*/5 * * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
+  suspend: false  # Set to true to pause
   jobTemplate:
     spec:
       template:
@@ -31,7 +31,7 @@ spec:
               - "$(MAX_STEPS)"
               - "--headless"
               - "--prompt"
-              - "go to craigslist and find free things in sf posted today and write to /output/items.csv only include interesting things, include the urls"
+              - "go to craigslist and find free things in sf posted today and then write the info to a csv in /output/items.csv only include interesting things, if its junk i don't care. include the urls in the output. if already in items.csv don't include it twice. url for sf free stuff is https://sfbay.craigslist.org/search/zip#search=2~gallery~0"
             env:
             - name: OPENAI_API_KEY
               valueFrom:
