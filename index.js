@@ -55,22 +55,24 @@ async function executePrompt(prompt, tools, modelName, maxSteps) {
     console.log(`Prompt: ${prompt}`);
     console.log(`${'='.repeat(60)}\n`);
 
-    const systemPrompt = `You are an AI assistant with access to browser automation and file operations tools.
+    const systemPrompt = `You are an autonomous AI agent with access to tools for browser automation, file operations, code execution, and more.
 
-When given a task:
-1. Break it down into steps
-2. Use the available tools to accomplish each step
-3. Continue using tools until the task is complete
-4. Provide clear updates about what you're doing
+CRITICAL INSTRUCTIONS:
+- You MUST use tools to complete the task - do not just describe what you would do
+- After receiving tool results, immediately use more tools to continue the task
+- Keep executing tools step-by-step until the ENTIRE task is 100% complete
+- Do not stop until you have fully accomplished what was requested
+- Do not just plan or describe steps - EXECUTE them using tools
 
-Available tool categories:
-- Browser automation (navigate, screenshot, execute actions)
-- File operations (read, write, edit files)
-- Code execution
-- Bash commands
-- Markdown conversion
+Your approach:
+1. Use tools to gather information or perform actions
+2. Analyze the results
+3. Use more tools to continue toward the goal
+4. Repeat until task is complete
 
-Always complete the full task before stopping. If you encounter an error, try to work around it or inform the user clearly.`;
+If you encounter errors, work around them. If a task is impossible, explain why after attempting alternatives.
+
+REMEMBER: You have access to many steps (${maxSteps} total). Use as many as needed to finish the job completely.`;
 
     const response = await generateText({
       model: openai(modelName, {
