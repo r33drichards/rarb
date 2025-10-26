@@ -60,10 +60,10 @@ export function createDatabaseTools() {
     getRecentItems: tool({
       description: 'Get recently saved items from the database. Useful for checking what has already been saved to avoid duplicates.',
       parameters: z.object({
-        limit: z.number().optional().default(100).describe('Maximum number of items to return (default: 100)'),
-        days: z.number().optional().default(7).describe('Number of days to look back (default: 7)'),
+        limit: z.number().describe('Maximum number of items to return (default: 100)').default(100),
+        days: z.number().describe('Number of days to look back (default: 7)').default(7),
       }),
-      execute: async ({ limit, days }) => {
+      execute: async ({ limit = 100, days = 7 }) => {
         const items = await getRecentOutputs(limit, days);
         return {
           success: true,
