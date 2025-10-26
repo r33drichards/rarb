@@ -121,6 +121,47 @@ async function initializeMCPClient(serverUrl) {
                 name: mcpTool.name,
                 arguments: args,
               });
+
+              // Summarize browser screenshots to save tokens
+              if (mcpTool.name === 'browser_screenshot' && result.content && result.content.length > 0) {
+                for (const item of result.content) {
+                  if (item.type === 'image' && item.data) {
+                    try {
+                      const { generateText } = await import('ai');
+                      const { openai } = await import('@ai-sdk/openai');
+
+                      const summary = await generateText({
+                        model: openai('gpt-4o-mini', {
+                          apiKey: options.apiKey || process.env.OPENAI_API_KEY,
+                        }),
+                        messages: [{
+                          role: 'user',
+                          content: [
+                            { type: 'text', text: 'Describe what you see on this webpage in 3-4 sentences. Focus on: 1) Main headings and titles 2) Links and their text 3) Any forms or interactive elements 4) Key content or listings visible. Be specific about text you can read.' },
+                            { type: 'image', image: item.data, mimeType: item.mimeType || 'image/jpeg' }
+                          ]
+                        }]
+                      });
+
+                      // Replace image data with summary
+                      item.type = 'text';
+                      item.text = `[Screenshot summary] ${summary.text}`;
+                      delete item.data;
+                      delete item.mimeType;
+                      delete item.annotations;
+
+                      console.log(`📸 Screenshot summarized: ${summary.text.substring(0, 100)}...`);
+                    } catch (err) {
+                      console.error(`Error summarizing screenshot: ${err.message}`);
+                      // Fallback: just remove the image data
+                      item.type = 'text';
+                      item.text = '[Screenshot taken but could not be summarized]';
+                      delete item.data;
+                    }
+                  }
+                }
+              }
+
               return result.content;
             },
           });
