@@ -140,8 +140,15 @@ REMEMBER: You have access to many steps (${maxSteps} total). Use as many as need
       console.log(`  - isContinued: ${step.isContinued}`);
       console.log(`  - warnings: ${JSON.stringify(step.warnings)}`);
     });
-    console.log(`\n--- Debug: Response Object Keys ---`);
-    console.log(`Available keys: ${Object.keys(response).join(', ')}`);
+    console.log(`\n--- Debug: Response Object Analysis ---`);
+    console.log(`Object.keys: ${Object.keys(response).join(', ')}`);
+    console.log(`Object.getOwnPropertyNames: ${Object.getOwnPropertyNames(response).join(', ')}`);
+    console.log(`\nProperty values:`);
+    console.log(`  - response.text type: ${typeof response.text}, value: ${response.text?.substring(0, 100) || 'undefined/empty'}`);
+    console.log(`  - response.finishReason: ${response.finishReason}`);
+    console.log(`  - response.usage: ${JSON.stringify(response.usage)}`);
+    console.log(`  - response.resolvedOutput type: ${typeof response.resolvedOutput}`);
+    console.log(`  - response.resolvedOutput value: ${JSON.stringify(response.resolvedOutput)?.substring(0, 200)}`);
     console.log(`${'='.repeat(60)}\n`);
 
     return response;
