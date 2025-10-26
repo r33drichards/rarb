@@ -50,7 +50,7 @@ spec:
               - "$(MAX_STEPS)"
               - "--headless"
               - "--prompt"
-              - "go to craigslist and find free things in sf posted today and write to /output/items.csv only include interesting things, include the urls"
+              - "go to craigslist and find free things in sf posted today and then write the info to a csv in /home/gem/workspace/items.csv only include interesting things, if its junk i don't care. include the urls in the output. if already in items.csv don't include it twice"
             env:
             - name: OPENAI_API_KEY
               valueFrom:
