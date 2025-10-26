@@ -186,8 +186,7 @@ async function initializeMCPClient(serverUrl) {
     return {
       client: mcpClient,
       async tools() {
-        await mcpClient.listTools();
-
+        return await mcpClient.listTools();
       },
       async close() {
         if (mcpClient && typeof mcpClient.close === 'function') {
