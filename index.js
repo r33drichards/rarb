@@ -6,6 +6,8 @@ import { openai } from '@ai-sdk/openai';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Command } from 'commander';
 import { createInterface } from 'readline';
+import { initializeDatabase, testConnection, initializeSchema, closeDatabase } from './db/database.js';
+import { createDatabaseTools } from './db/tools.js';
 
 const program = new Command();
 
@@ -194,14 +196,41 @@ async function interactiveMode(tools, modelName) {
 
 async function main() {
   try {
+    // Initialize database if environment variables are set
+    if (process.env.DB_HOST || process.env.DB_NAME) {
+      console.log('Initializing database connection...');
+      initializeDatabase();
+
+      // Test connection
+      const connected = await testConnection();
+      if (connected) {
+        try {
+          // Try to initialize schema (will skip if already exists)
+          await initializeSchema();
+        } catch (error) {
+          console.log('Note: Schema may already exist or user lacks permissions:', error.message);
+        }
+      } else {
+        console.warn('⚠️  Database connection failed - continuing without database support');
+      }
+    } else {
+      console.log('ℹ️  Database environment variables not set - skipping database initialization');
+    }
+
     // Initialize MCP client
     client = await initializeMCPClient(options.url);
 
     // Get tools from MCP server
     console.log('Fetching tools from MCP server...');
-    const tools = await client.tools();
+    const mcpTools = await client.tools();
+
+    // Get database tools
+    const dbTools = createDatabaseTools();
+
+    // Merge MCP tools and database tools
+    const tools = { ...mcpTools, ...dbTools };
     const toolNames = Object.keys(tools);
-    console.log(`✓ Loaded ${toolNames.length} tools: ${toolNames.join(', ')}\n`);
+    console.log(`✓ Loaded ${toolNames.length} tools (${Object.keys(mcpTools).length} MCP + ${Object.keys(dbTools).length} database): ${toolNames.join(', ')}\n`);
 
     if (options.headless && !options.prompt) {
       console.error('Error: --prompt is required when running in headless mode');
@@ -229,6 +258,8 @@ async function main() {
       await client.close();
       console.log('✓ MCP client closed');
     }
+    // Close database connection
+    await closeDatabase();
   }
 }
 
@@ -238,6 +269,7 @@ process.on('SIGINT', async () => {
   if (client) {
     await client.close();
   }
+  await closeDatabase();
   process.exit(0);
 });
 
@@ -246,6 +278,7 @@ process.on('SIGTERM', async () => {
   if (client) {
     await client.close();
   }
+  await closeDatabase();
   process.exit(0);
 });
 

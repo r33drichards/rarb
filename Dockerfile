@@ -13,8 +13,8 @@ RUN npm ci --only=production
 # Production stage
 FROM node:22-alpine
 
-# Install curl for healthchecks
-RUN apk add --no-cache curl
+# Install curl for healthchecks and postgresql-client for database initialization
+RUN apk add --no-cache curl postgresql-client bash
 
 # Set working directory
 WORKDIR /app
@@ -25,6 +25,7 @@ COPY --from=builder /app/node_modules ./node_modules
 # Copy application files
 COPY package.json ./
 COPY index.js ./
+COPY db/ ./db/
 
 # Create a non-root user
 RUN addgroup -g 1001 -S nodejs && \

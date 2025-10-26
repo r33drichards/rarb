@@ -27,11 +27,9 @@ spec:
               - "$(MCP_URL)"
               - "--model"
               - "$(MODEL)"
-              - "--max-steps"
-              - "$(MAX_STEPS)"
               - "--headless"
               - "--prompt"
-              - "go to craigslist and find free things in sf posted today and then write the info to a csv in /home/gem/workspace/output/items.csv only include interesting things, if its junk i don't care. include the urls in the output. if already in items.csv don't include it twice. url for sf free stuff is https://sfbay.craigslist.org/search/zip#search=2~gallery~0"
+              - "Go to craigslist and find free things in San Francisco posted today. URL: https://sfbay.craigslist.org/search/zip#search=2~gallery~0. First, use getRecentItems to check what's already in the database (look back 1 day). Then save interesting items to the database using saveItemsToDatabase. Only include interesting things - skip junk. For each item include: title, description, url, and set category to 'free stuff'. The database automatically prevents duplicates based on title and URL."
             env:
             - name: OPENAI_API_KEY
               valueFrom:
@@ -48,13 +46,19 @@ spec:
                 configMapKeyRef:
                   name: mcp-agent-config
                   key: MODEL
-            - name: MAX_STEPS
-              valueFrom:
-                configMapKeyRef:
-                  name: mcp-agent-config
-                  key: MAX_STEPS
             - name: NODE_ENV
               value: "production"
+            # Database connection configuration
+            - name: DB_HOST
+              value: "postgres"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: "rarb_outputs"
+            - name: DB_USER
+              value: "sandbox"
+            - name: DB_PASSWORD
+              value: "CHANGE_ME"
             resources:
               requests:
                 memory: "128Mi"
