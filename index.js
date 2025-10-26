@@ -130,6 +130,18 @@ async function initializeMCPClient(serverUrl) {
                       const { generateText } = await import('ai');
                       const { openai } = await import('@ai-sdk/openai');
 
+                      // Format image data for AI SDK
+                      // The data might be base64 string, ensure it has proper data URI format
+                      let imageData = item.data;
+                      const mimeType = item.mimeType || 'image/jpeg';
+
+                      // If data is a base64 string without data URI prefix, add it
+                      if (typeof imageData === 'string' && !imageData.startsWith('data:')) {
+                        imageData = `data:${mimeType};base64,${imageData}`;
+                      }
+
+                      console.log(`📸 Summarizing screenshot... (image type: ${mimeType}, data length: ${typeof imageData === 'string' ? imageData.length : 'N/A'})`);
+
                       const summary = await generateText({
                         model: openai('gpt-4o-mini', {
                           apiKey: options.apiKey || process.env.OPENAI_API_KEY,
@@ -138,7 +150,7 @@ async function initializeMCPClient(serverUrl) {
                           role: 'user',
                           content: [
                             { type: 'text', text: 'Describe what you see on this webpage in 3-4 sentences. Focus on: 1) Main headings and titles 2) Links and their text 3) Any forms or interactive elements 4) Key content or listings visible. Be specific about text you can read.' },
-                            { type: 'image', image: item.data, mimeType: item.mimeType || 'image/jpeg' }
+                            { type: 'image', image: imageData }
                           ]
                         }]
                       });
@@ -150,7 +162,7 @@ async function initializeMCPClient(serverUrl) {
                       delete item.mimeType;
                       delete item.annotations;
 
-                      console.log(`📸 Screenshot summarized: ${summary.text.substring(0, 100)}...`);
+                      console.log(`✓ Screenshot summarized: ${summary.text}`);
                     } catch (err) {
                       console.error(`Error summarizing screenshot: ${err.message}`);
                       // Fallback: just remove the image data
