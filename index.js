@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { generateText, tool, experimental_createMCPClient } from 'ai';
+import { generateText, tool } from 'ai';
+import { experimental_createMCPClient } from '@ai-sdk/mcp';
 import { openai } from '@ai-sdk/openai';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Command } from 'commander';
