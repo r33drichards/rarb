@@ -27,8 +27,6 @@ spec:
               - "$(MCP_URL)"
               - "--model"
               - "$(MODEL)"
-              - "--max-steps"
-              - "$(MAX_STEPS)"
               - "--headless"
               - "--prompt"
               - "Go to craigslist and find free things in San Francisco posted today. URL: https://sfbay.craigslist.org/search/zip#search=2~gallery~0. First, use getRecentItems to check what's already in the database (look back 1 day). Then save interesting items to the database using saveItemsToDatabase. Only include interesting things - skip junk. For each item include: title, description, url, and set category to 'free stuff'. The database automatically prevents duplicates based on title and URL."
@@ -48,11 +46,6 @@ spec:
                 configMapKeyRef:
                   name: mcp-agent-config
                   key: MODEL
-            - name: MAX_STEPS
-              valueFrom:
-                configMapKeyRef:
-                  name: mcp-agent-config
-                  key: MAX_STEPS
             - name: NODE_ENV
               value: "production"
             # Database connection configuration
