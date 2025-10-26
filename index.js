@@ -135,12 +135,15 @@ async function initializeMCPClient(serverUrl) {
                       let imageData = item.data;
                       const mimeType = item.mimeType || 'image/jpeg';
 
+                      console.log(`📸 Raw data type: ${typeof imageData}, starts with: ${typeof imageData === 'string' ? imageData.substring(0, 50) : 'N/A'}`);
+
                       // If data is a base64 string without data URI prefix, add it
                       if (typeof imageData === 'string' && !imageData.startsWith('data:')) {
                         imageData = `data:${mimeType};base64,${imageData}`;
                       }
 
                       console.log(`📸 Summarizing screenshot... (image type: ${mimeType}, data length: ${typeof imageData === 'string' ? imageData.length : 'N/A'})`);
+                      console.log(`📸 Formatted data starts with: ${typeof imageData === 'string' ? imageData.substring(0, 100) : 'N/A'}`);
 
                       const summary = await generateText({
                         model: openai('gpt-4o-mini', {
