@@ -15,7 +15,7 @@ program
   .description('CLI agent for MCP tools with HTTP transport')
   .version('1.0.0')
   .option('-u, --url <url>', 'MCP server URL', 'http://localhost:3000/mcp')
-  .option('-m, --model <model>', 'AI model to use', 'o3-mini')
+  .option('-m, --model <model>', 'AI model to use', 'gpt-5')
   .option('-p, --prompt <prompt>', 'Prompt to execute')
   .option('--headless', 'Run in headless mode (autonomous execution)', false)
   .option('--max-steps <number>', 'Maximum number of steps', '20')
