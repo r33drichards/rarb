@@ -11,7 +11,7 @@ configMapGenerator:
   - name: mcp-agent-config
     literals:
       - MCP_URL=http://sandbox-mcp:8091/mcp
-      - MODEL=gpt-4o
+      - MODEL=gpt-5
       - MAX_STEPS=100
 
 commonLabels:
