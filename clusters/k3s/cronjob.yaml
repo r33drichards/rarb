@@ -5,7 +5,7 @@ metadata:
   namespace: default
 spec:
   # Run every 5 minutes for testing (change to "0 2 * * *" for daily at 2 AM)
-  schedule: "*/5 * * * *"
+  schedule: "0 2 * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
@@ -31,7 +31,7 @@ spec:
               - "$(MAX_STEPS)"
               - "--headless"
               - "--prompt"
-              - "go to craigslist and find free things in sf posted today and then write the info to a csv in /output/items.csv only include interesting things, if its junk i don't care. include the urls in the output. if already in items.csv don't include it twice. url for sf free stuff is https://sfbay.craigslist.org/search/zip#search=2~gallery~0"
+              - "go to craigslist and find free things in sf posted today and then write the info to a csv in /home/gem/workspace/output/items.csv only include interesting things, if its junk i don't care. include the urls in the output. if already in items.csv don't include it twice. url for sf free stuff is https://sfbay.craigslist.org/search/zip#search=2~gallery~0"
             env:
             - name: OPENAI_API_KEY
               valueFrom:
