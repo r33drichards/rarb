@@ -207,30 +207,7 @@ async function executePrompt(prompt, tools, modelName, maxSteps) {
     console.log(`Prompt: ${prompt}`);
     console.log(`${'='.repeat(60)}\n`);
 
-    const systemPrompt = `You are a browser automation expert. When navigating to URLs:
-
-1. **Close any popups first**: If you see a popup or dialog, press Escape to close it
-2. **Navigate to URLs properly**:
-   - Use HOTKEY with ["control", "l"] to focus the address bar (or ["command", "l"] on Mac)
-   - Then use TYPING with use_clipboard: true to type the URL
-   - Then use HOTKEY with ["enter"] to navigate
-3. **Key names**: Always use lowercase for keys (e.g., "enter" not "Enter", "escape" not "Escape")
-4. **Wait for page loads**: After navigation, use WAIT action for 3-5 seconds to let the page load
-5. **Take screenshots**: After waiting, take a screenshot to verify the page loaded correctly
-6. **Be persistent**: If a navigation fails, try closing popups first, then repeat the navigation sequence
-
-Common browser actions:
-- Close popup: HOTKEY with ["escape"]
-- Focus address bar: HOTKEY with ["control", "l"]
-- Type URL: TYPING with use_clipboard: true
-- Navigate: HOTKEY with ["enter"]
-- Wait for load: WAIT with duration: 3-5
-
-When scraping data:
-- Read all visible items on the current page before scrolling
-- Scroll down to load more items: HOTKEY with ["pagedown"] or execute scroll JavaScript
-- Take screenshots after scrolling to verify new content loaded
-- Extract data systematically, keeping track of what you've already collected`;
+    const systemPrompt = ``;
 
     const response = await generateText({
       model: openai(modelName, {
