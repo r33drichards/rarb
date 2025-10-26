@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: mcp-agent-cronjob
-  namespace: mcp-agent
+  namespace: default
 spec:
   # Run every 5 minutes for testing (change to "0 2 * * *" for daily at 2 AM)
   schedule: "*/5 * * * *"
